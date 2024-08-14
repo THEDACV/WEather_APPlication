@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+
+      .search-box {
+        margin-bottom: 20px;
+      }
+
+      input,
+      button {
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      button {
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      .weather-box {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .forecast-box {
+        margin-top: 20px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .forecast-items {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .forecast-item {
+        background-color: #f0f0f0;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="search-box">
+        <input type="text" placeholder="Enter city name" id="city-input" />
+        <button id="search-btn">Search</button>
+      </div>
+
+      <div class="weather-box">
+        <h2 id="city-name"></h2>
+        <img id="weather-icon" src="" alt="Weather Icon" />
+        <p id="temperature"></p>
+        <p id="description"></p>
+        <p id="humidity"></p>
+        <p id="wind-speed"></p>
+      </div>
+
+      <div class="forecast-box">
+        <h3>5-Day Forecast</h3>
+        <div class="forecast-items"></div>
+      </div>
+    </div>
+
+    <script>
+      const apiKey = "YOUR_API_KEY";
+      const cityInput = document.getElementById("city-input");
+      const searchBtn = document.getElementById("search-btn");
+      const cityName = document.getElementById("city-name");
+      const weatherIcon = document.getElementById("weather-icon");
+      const temperature = document.getElementById("temperature");
+      const description = document.getElementById("description");
+      const humidity = document.getElementById("humidity");
+      const windSpeed = document.getElementById("wind-speed");
+      const forecastBox = document.querySelector(".forecast-box");
+      const forecastItems = document.querySelector(".forecast-items");
+
+      searchBtn.addEventListener("click", () => {
+        const city = cityInput.value;
+        getWeatherData(city);
+      });
+
+      function getWeatherData(city) {
+        const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+        fetch(apiUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            cityName.textContent = data.name;
+            weatherIcon.src = `http://openweathermap.org/img/w/${data.weather[0].icon}.png`;
+            temperature.textContent = `${data.main.temp}°C`;
+            description.textContent = data.weather[0].description;
+            humidity.textContent = `Humidity: ${data.main.humidity}%`;
+            windSpeed.textContent = `Wind Speed: ${data.wind.speed} m/s`;
+
+            getForecastData(data.coord.lat, data.coord.lon);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error fetching weather data. Please try again later.");
+          });
+      }
+
+      function getForecastData(lat, lon) {
+        const forecastApiUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=current,minutely,hourly&appid=${apiKey}&units=metric`;
+
+        fetch(forecastApiUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            forecastItems.innerHTML = "";
+
+            for (let i = 1; i <= 5; i++) {
+              const forecastItem = document.createElement("div");
+              forecastItem.classList.add("forecast-item");
+
+              const date = new Date(data.daily[i].dt * 1000);
+              const dateString = date.toLocaleDateString("en-US", {
+                weekday: "short",
+              });
+
+              forecastItem.innerHTML = `
+                  <p>${dateString}</p>
+                  <img src="http://openweathermap.org/img/w/${data.daily[i].weather[0].icon}.png" alt="Weather Icon">
+                  <p>${data.daily[i].temp.day}°C</p>
+                `;
+
+              forecastItems.appendChild(forecastItem);
+            }
+
+            forecastBox.style.display = "block";
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error fetching forecast data. Please try again later.");
+          });
+      }
+    </script>
+  </body>
+</html>
